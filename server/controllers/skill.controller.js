@@ -358,7 +358,7 @@ const callGeminiWithFallback = async (params) => {
     const key = apiKeys[i];
     try {
       const genAI = new GoogleGenerativeAI(key);
-      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-001" });
+      const model = genAI.getGenerativeModel({ model: "gemini-pro" });
 
       let result;
       if (params.context === 'chat') {
