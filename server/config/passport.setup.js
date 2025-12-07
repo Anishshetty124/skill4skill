@@ -9,39 +9,34 @@ passport.use(
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
       callbackURL: '/api/v1/auth/google/callback',
       scope: ['profile', 'email'],
-      proxy: true,
+      proxy: true, // Excellent, you added this! This handles the Railway HTTPS issue.
     },
     async (accessToken, refreshToken, profile, done) => {
       try {
-       
         let user = await User.findOne({ googleId: profile.id });
 
         if (user) {
-          
           return done(null, user);
         }
 
-      
         user = await User.findOne({ email: profile.emails[0].value });
 
         if (user) {
-         
           user.googleId = profile.id;
-          user.profilePicture = user.profilePicture || profile.photos[0].value; 
-          user.isVerified = true; 
+          user.profilePicture = user.profilePicture || profile.photos[0].value;
+          user.isVerified = true;
           await user.save();
           return done(null, user);
         }
 
-     
         const newUser = await User.create({
           googleId: profile.id,
           firstName: profile.name.givenName,
           lastName: profile.name.familyName,
           email: profile.emails[0].value,
-          username: profile.emails[0].value.split('@')[0] + Math.floor(Math.random() * 1000), 
+          username: profile.emails[0].value.split('@')[0] + Math.floor(Math.random() * 1000),
           profilePicture: profile.photos[0].value,
-          isVerified: true, 
+          isVerified: true,
         });
 
         return done(null, newUser);
@@ -52,3 +47,17 @@ passport.use(
     }
   )
 );
+
+
+passport.serializeUser((user, done) => {
+  done(null, user.id);
+});
+
+passport.deserializeUser(async (id, done) => {
+  try {
+    const user = await User.findById(id);
+    done(null, user);
+  } catch (error) {
+    done(error, null);
+  }
+});
