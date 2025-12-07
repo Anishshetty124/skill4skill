@@ -9,7 +9,7 @@ passport.use(
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
       callbackURL: '/api/v1/auth/google/callback',
       scope: ['profile', 'email'],
-      proxy: true, // Excellent, you added this! This handles the Railway HTTPS issue.
+      proxy: true,
     },
     async (accessToken, refreshToken, profile, done) => {
       try {
@@ -42,12 +42,13 @@ passport.use(
         return done(null, newUser);
 
       } catch (error) {
+        // ▼▼▼ THIS IS THE MOST IMPORTANT SPOT ▼▼▼
+        console.error("🔥 GOOGLE AUTH STRATEGY ERROR:", error); 
         return done(error, null);
       }
     }
   )
 );
-
 
 passport.serializeUser((user, done) => {
   done(null, user.id);
@@ -58,6 +59,7 @@ passport.deserializeUser(async (id, done) => {
     const user = await User.findById(id);
     done(null, user);
   } catch (error) {
+    console.error("🔥 DESERIALIZE ERROR:", error);
     done(error, null);
   }
 });
