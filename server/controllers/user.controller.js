@@ -48,7 +48,7 @@ const registerUser = asyncHandler(async (req, res) => {
 
     const msg = {
         to: user.email,
-        from: 'onboarding@resend.dev', // Default test email
+        from: 'noreply@skill4skill.tech', // Default test email
         subject: 'Your skill4skill Verification Code',
         html: `
             <div style="font-family: sans-serif; padding: 20px; color: #333;">
@@ -144,7 +144,7 @@ const forgotPassword = asyncHandler(async (req, res) => {
 
     const msg = {
         to: user.email,
-        from: 'onboarding@resend.dev',
+        from: 'noreply@skill4skill.tech',
         subject: 'Your skill4skill Password Reset Code',
         html: `
             <div style="font-family: sans-serif; padding: 20px; color: #333;">
@@ -222,7 +222,7 @@ const requestEmailChange = asyncHandler(async (req, res) => {
     
     const msg = { 
         to: newEmail, 
-        from: 'onboarding@resend.dev', 
+        from: 'noreply@skill4skill.tech', 
         subject: 'Verify Your New Email for skill4skill', 
         html: `Your code to change your email is: <strong>${otp}</strong>` 
     };
@@ -397,7 +397,7 @@ const resendVerificationEmail = asyncHandler(async (req, res) => {
     const msg = {
         to: user.email,
         subject: 'Your New skill4skill Verification Code',
-        from: 'onboarding@resend.dev',
+        from: 'noreply@skill4skill.tech',
         html: `
             <div style="font-family: sans-serif; padding: 20px; color: #333;">
                 <h2>Here is your new verification code</h2>

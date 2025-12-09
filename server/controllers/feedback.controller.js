@@ -40,7 +40,7 @@ const submitFeedback = asyncHandler(async (req, res) => {
   // CHANGE 3: Update the email message object
   const emailMsg = {
     // IMPORTANT: Until you verify a domain, you MUST use this 'from' address.
-    from: 'onboarding@resend.dev', 
+    from: 'noreply@skill4skill.tech', 
     to: 'anishshetty124@gmail.com', // This works because it is likely your own email
     subject: `New Feedback Received: [${feedbackType.toUpperCase()}]`,
     html: `
