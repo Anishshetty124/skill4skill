@@ -358,7 +358,7 @@ const callGeminiWithFallback = async (params) => {
     const key = apiKeys[i];
     try {
       const genAI = new GoogleGenerativeAI(key);
-      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+      const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash-lite-preview-09-2025" });
 
       let result;
       if (params.context === 'chat') {
@@ -372,6 +372,7 @@ const callGeminiWithFallback = async (params) => {
       return response.text();
 
     } catch (error) {
+      console.log("Could not list models", error);
       console.error(`Google AI Error with API Key ${i + 1}:`, error.message);
       if (i === apiKeys.length - 1) {
         throw new ApiError(500, "The AI service is currently unavailable after trying all available keys.");

@@ -8,7 +8,7 @@ passport.use(
       clientID: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
       // ▼▼▼ FORCE THE HTTPS URL (No 'If/Else' logic allowed) ▼▼▼
-      callbackURL: 'https://skillswap-production-9cc9.up.railway.app/api/v1/auth/google/callback',
+      callbackURL: 'https://api.skill4skill.tech/api/v1/auth/google/callback',
       scope: ['profile', 'email'],
       proxy: true, 
     },
