@@ -4,8 +4,7 @@ import { ApiResponse } from '../utils/ApiResponse.js';
 import { User } from '../models/user.model.js';
 import { Skill } from '../models/skill.model.js';
 import { calculateUserStats } from '../utils/BadgeManager.js';
-// CHANGE 1: Swapped SendGrid for Resend
-import { Resend } from 'resend';
+import { Resend } from 'resend'; 
 import jwt from 'jsonwebtoken';
 import opencage from 'opencage-api-client';
 import { Proposal } from '../models/proposal.model.js';
@@ -49,8 +48,7 @@ const registerUser = asyncHandler(async (req, res) => {
 
     const msg = {
         to: user.email,
-        // IMPORTANT: Use 'onboarding@resend.dev' until you verify your custom domain
-        from: 'onboarding@resend.dev',
+        from: 'onboarding@resend.dev', // Default test email
         subject: 'Your skill4skill Verification Code',
         html: `
             <div style="font-family: sans-serif; padding: 20px; color: #333;">
@@ -63,11 +61,11 @@ const registerUser = asyncHandler(async (req, res) => {
     };
 
     try {
+        // INITIALIZE HERE TO PREVENT CRASH
+        const resend = new Resend(process.env.RESEND_API_KEY);
         await resend.emails.send(msg);
     } catch (error) {
         console.error("Resend Error (Register):", error);
-        // Note: I kept your logic to delete user if email fails, 
-        // but now that Resend is reliable, you might not need to be this harsh.
         await User.findByIdAndDelete(user._id); 
         throw new ApiError(500, "Could not send verification email. Please try again later.");
     }
@@ -146,7 +144,7 @@ const forgotPassword = asyncHandler(async (req, res) => {
 
     const msg = {
         to: user.email,
-        from: 'onboarding@resend.dev', // Changed to Resend Test Email
+        from: 'onboarding@resend.dev',
         subject: 'Your skill4skill Password Reset Code',
         html: `
             <div style="font-family: sans-serif; padding: 20px; color: #333;">
@@ -159,6 +157,8 @@ const forgotPassword = asyncHandler(async (req, res) => {
     };
 
     try {
+        // INITIALIZE HERE
+        const resend = new Resend(process.env.RESEND_API_KEY);
         await resend.emails.send(msg);
         return res.status(200).json(new ApiResponse(200, { email: user.email }, "Password reset OTP sent to your email."));
     } catch (error) {
@@ -222,19 +222,20 @@ const requestEmailChange = asyncHandler(async (req, res) => {
     
     const msg = { 
         to: newEmail, 
-        from: 'onboarding@resend.dev', // Changed to Resend Test Email
+        from: 'onboarding@resend.dev', 
         subject: 'Verify Your New Email for skill4skill', 
         html: `Your code to change your email is: <strong>${otp}</strong>` 
     };
     
     try {
+        // INITIALIZE HERE
+        const resend = new Resend(process.env.RESEND_API_KEY);
         await resend.emails.send(msg);
     } catch (error) {
         console.error("Resend Error (Email Change):", error);
-        // Clean up otp if email fails? Optional, but good practice.
         throw new ApiError(500, "Could not send verification email.");
     }
-    
+
     return res.status(200).json(new ApiResponse(200, {}, "Verification OTP sent to your new email address."));
 });
 
@@ -396,7 +397,7 @@ const resendVerificationEmail = asyncHandler(async (req, res) => {
     const msg = {
         to: user.email,
         subject: 'Your New skill4skill Verification Code',
-        from: 'onboarding@resend.dev', // Changed to Resend Test Email
+        from: 'onboarding@resend.dev',
         html: `
             <div style="font-family: sans-serif; padding: 20px; color: #333;">
                 <h2>Here is your new verification code</h2>
@@ -407,6 +408,8 @@ const resendVerificationEmail = asyncHandler(async (req, res) => {
     };
 
     try {
+        // INITIALIZE HERE
+        const resend = new Resend(process.env.RESEND_API_KEY);
         await resend.emails.send(msg);
         return res.status(200).json(new ApiResponse(200, {}, "A new verification code has been sent to your email."));
     } catch (error) {
