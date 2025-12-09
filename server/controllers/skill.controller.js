@@ -358,8 +358,7 @@ const callGeminiWithFallback = async (params) => {
     const key = apiKeys[i];
     try {
       const genAI = new GoogleGenerativeAI(key);
-      // Use the specific 002 version. This is the current active Free Tier model.
-const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+      const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash-lite-preview-09-2025" });
 
       let result;
       if (params.context === 'chat') {
