@@ -31,8 +31,8 @@ const AiChat = () => {
   const textInputRef = useRef(null); 
   const messagesEndRef = useRef(null);
   const recognitionRef = useRef(null);
-  const chatWindowRef = useRef(null); // Ref for the chat window
-  const toggleButtonRef = useRef(null); // Ref for the floating button
+  const chatWindowRef = useRef(null);
+  const toggleButtonRef = useRef(null);
 
   // State
   const [isLoading, setIsLoading] = useState(false);
@@ -42,7 +42,6 @@ const AiChat = () => {
   // 1. CLICK OUTSIDE TO CLOSE
   useEffect(() => {
     const handleClickOutside = (event) => {
-      // If chat is open AND click is NOT inside chat window AND click is NOT on the toggle button
       if (
         isOpen &&
         chatWindowRef.current &&
@@ -157,13 +156,14 @@ const AiChat = () => {
       {/* Floating Action Button */}
       <button
         ref={toggleButtonRef}
-        // 2. FIXED: Toggle Logic (was stuck on true)
         onClick={() => setIsOpen((prev) => !prev)}
         className={`fixed bottom-6 right-6 p-4 rounded-full shadow-2xl z-40 transition-all duration-300 hover:scale-110 group ${
           isOpen ? "bg-red-500 rotate-90" : "bg-gradient-to-r from-violet-600 to-indigo-600"
         }`}
       >
-        {!isOpen && <span className="absolute inset-0 rounded-full animate-ping bg-violet-400 opacity-20"></span>}
+        {/* CHANGED: Replaced 'animate-ping' with 'animate-pulse' and subtle opacity */}
+        {!isOpen && <span className="absolute inset-0 rounded-full animate-pulse bg-violet-400 opacity-40"></span>}
+        
         {isOpen ? <XMarkIcon className="h-7 w-7 text-white" /> : <SparklesIcon className="h-7 w-7 text-white" />}
       </button>
 
@@ -195,7 +195,6 @@ const AiChat = () => {
               >
                 Clear
               </button>
-              {/* 3. Added Internal Close Button */}
               <button
                 onClick={() => setIsOpen(false)}
                 className="p-1 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-500 transition-colors"
