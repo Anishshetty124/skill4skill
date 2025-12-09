@@ -4,15 +4,18 @@ import { ApiResponse } from '../utils/ApiResponse.js';
 import { User } from '../models/user.model.js';
 import { Skill } from '../models/skill.model.js';
 import { calculateUserStats } from '../utils/BadgeManager.js';
-import sgMail from '@sendgrid/mail';
+// CHANGE 1: Swapped SendGrid for Resend
+import { Resend } from 'resend';
 import jwt from 'jsonwebtoken';
 import opencage from 'opencage-api-client';
 import { Proposal } from '../models/proposal.model.js';
 import { Conversation } from '../models/conversation.model.js';
 import { ChatRequest } from '../models/chatRequest.model.js';
 
-sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+// CHANGE 2: Initialize Resend with your API Key
+const resend = new Resend(process.env.RESEND_API_KEY);
 
+// --- 1. REGISTER USER (Updated Email Logic) ---
 const registerUser = asyncHandler(async (req, res) => {
     const { firstName, lastName, username, email, password } = req.body;
 
@@ -46,7 +49,8 @@ const registerUser = asyncHandler(async (req, res) => {
 
     const msg = {
         to: user.email,
-        from: 'noreply@skill4skill.tech',
+        // IMPORTANT: Use 'onboarding@resend.dev' until you verify your custom domain
+        from: 'onboarding@resend.dev',
         subject: 'Your skill4skill Verification Code',
         html: `
             <div style="font-family: sans-serif; padding: 20px; color: #333;">
@@ -59,9 +63,11 @@ const registerUser = asyncHandler(async (req, res) => {
     };
 
     try {
-        await sgMail.send(msg);
+        await resend.emails.send(msg);
     } catch (error) {
-        console.error("SendGrid Error:", error);
+        console.error("Resend Error (Register):", error);
+        // Note: I kept your logic to delete user if email fails, 
+        // but now that Resend is reliable, you might not need to be this harsh.
         await User.findByIdAndDelete(user._id); 
         throw new ApiError(500, "Could not send verification email. Please try again later.");
     }
@@ -69,6 +75,7 @@ const registerUser = asyncHandler(async (req, res) => {
     return res.status(201).json(new ApiResponse(201, { email: user.email }, "Verification OTP sent to your email."));
 });
 
+// --- NO CHANGES TO LOGIN/LOGOUT ---
 const loginUser = asyncHandler(async (req, res) => {
     const { email, password } = req.body;
     if (!email || !password) {
@@ -118,6 +125,7 @@ const logoutUser = asyncHandler(async (req, res) => {
     return res.status(200).clearCookie("accessToken", options).clearCookie("refreshToken", options).json(new ApiResponse(200, {}, "User logged out successfully"));
 });
 
+// --- 2. FORGOT PASSWORD (Updated Email Logic) ---
 const forgotPassword = asyncHandler(async (req, res) => {
     const { email } = req.body;
     if (!email) {
@@ -138,7 +146,7 @@ const forgotPassword = asyncHandler(async (req, res) => {
 
     const msg = {
         to: user.email,
-        from: 'noreply@skill4skill.tech',
+        from: 'onboarding@resend.dev', // Changed to Resend Test Email
         subject: 'Your skill4skill Password Reset Code',
         html: `
             <div style="font-family: sans-serif; padding: 20px; color: #333;">
@@ -151,14 +159,15 @@ const forgotPassword = asyncHandler(async (req, res) => {
     };
 
     try {
-        await sgMail.send(msg);
+        await resend.emails.send(msg);
         return res.status(200).json(new ApiResponse(200, { email: user.email }, "Password reset OTP sent to your email."));
     } catch (error) {
-        console.error("SendGrid Error:", error);
+        console.error("Resend Error (Forgot Password):", error);
         throw new ApiError(500, "Could not send password reset email. Please try again later.");
     }
 });
 
+// --- NO CHANGES TO RESET PASSWORD ---
 const resetPassword = asyncHandler(async (req, res) => {
     const { email, otp, newPassword } = req.body;
 
@@ -195,6 +204,7 @@ const resetPassword = asyncHandler(async (req, res) => {
     return res.status(200).json(new ApiResponse(200, {}, "Password has been reset successfully. You can now log in."));
 });
 
+// --- 3. REQUEST EMAIL CHANGE (Updated Email Logic) ---
 const requestEmailChange = asyncHandler(async (req, res) => {
     const { newEmail } = req.body;
     const userId = req.user._id;
@@ -209,8 +219,22 @@ const requestEmailChange = asyncHandler(async (req, res) => {
     user.emailChangeOtp = otp;
     user.emailChangeOtpExpiry = otpExpiry;
     await user.save({ validateBeforeSave: false });
-    const msg = { to: newEmail, from: 'noreply@skill4skill.tech', subject: 'Verify Your New Email for skill4skill', html: `Your code to change your email is: <strong>${otp}</strong>` };
-    await sgMail.send(msg);
+    
+    const msg = { 
+        to: newEmail, 
+        from: 'onboarding@resend.dev', // Changed to Resend Test Email
+        subject: 'Verify Your New Email for skill4skill', 
+        html: `Your code to change your email is: <strong>${otp}</strong>` 
+    };
+    
+    try {
+        await resend.emails.send(msg);
+    } catch (error) {
+        console.error("Resend Error (Email Change):", error);
+        // Clean up otp if email fails? Optional, but good practice.
+        throw new ApiError(500, "Could not send verification email.");
+    }
+    
     return res.status(200).json(new ApiResponse(200, {}, "Verification OTP sent to your new email address."));
 });
 
@@ -329,9 +353,9 @@ const verifyOtp = asyncHandler(async (req, res) => {
     }
 
     const user = await User.findOne({ 
-        email,
-        verificationOtp: otp,
-        verificationOtpExpiry: { $gt: Date.now() }
+        email, 
+        verificationOtp: otp, 
+        verificationOtpExpiry: { $gt: Date.now() } 
     });
 
     if (!user) {
@@ -346,6 +370,7 @@ const verifyOtp = asyncHandler(async (req, res) => {
     return res.status(200).json(new ApiResponse(200, {}, "Email verified successfully! You can now log in."));
 });
 
+// --- 4. RESEND VERIFICATION EMAIL (Updated Email Logic) ---
 const resendVerificationEmail = asyncHandler(async (req, res) => {
     const { email } = req.body;
     if (!email) {
@@ -371,7 +396,7 @@ const resendVerificationEmail = asyncHandler(async (req, res) => {
     const msg = {
         to: user.email,
         subject: 'Your New skill4skill Verification Code',
-        from: 'noreply@skill4skill.tech',
+        from: 'onboarding@resend.dev', // Changed to Resend Test Email
         html: `
             <div style="font-family: sans-serif; padding: 20px; color: #333;">
                 <h2>Here is your new verification code</h2>
@@ -382,10 +407,10 @@ const resendVerificationEmail = asyncHandler(async (req, res) => {
     };
 
     try {
-        await sgMail.send(msg);
+        await resend.emails.send(msg);
         return res.status(200).json(new ApiResponse(200, {}, "A new verification code has been sent to your email."));
     } catch (error) {
-        console.error("SendGrid Error:", error);
+        console.error("Resend Error (Resend OTP):", error);
         throw new ApiError(500, "Could not send verification email. Please try again later.");
     }
 });
